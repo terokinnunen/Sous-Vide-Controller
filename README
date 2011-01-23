@@ -1,0 +1,42 @@
+Sous Vide controller
+====================
+
+Sous Vide controller attempts to keep water bath temperature close to given target temperature. It uses a thermometer to measure the temperature and a remote control switch to turn a hotplate on and off.
+
+For more information about sous vide technology, see http://en.wikipedia.org/wiki/Sous-vide.
+
+Note: The software comes with absolutely no warranty.
+
+Requirements
+------------
+* PC
+* PC temperature sensor
+* Remote control switch and USB controller & tdtool
+* A hotplate
+* A pot
+
+Temperature sensor
+~~~~~~~~~~~~~~~~~~
+SousVide controller supports Phidgets temperature sensor. The needed equipment:
+* Temperature sensor (example http://www.phidgets.com/products.php?product_id=1051)
+* Immersion thermocouple (example http://www.phidgets.com/products.php?product_id=3108)
+* Phidgets Python module http://www.phidgets.com/programming_resources.php
+
+See installation instructions in http://www.phidgets.com/drivers.php.
+
+Note: suggestions for more inexpensive thermometers are welcome. The thermometer should have a Python or a command line interface and should preferably work in at least Windows, Mac and Linux.
+
+AC remote control switch
+~~~~~~~~~~~~~~~~~~~~~~~~
+A remote switch is used to turn the hotplate on and off based on measured temperature.
+
+* A receiver (example http://www.clasohlson.co.uk/Product/Product.aspx?id=156771770)
+* TellStick controller (http://www.clasohlson.co.uk/Product/Product.aspx?id=157599493)
+
+SousVide uses the tdtool command to control the switch. See http://www.telldus.se/ for installation instructions.
+
+Hotplate
+~~~~~~~~
+The hotplate must support control from the AC wall plug, i.e. it must not require any adjustments after being plugged in.
+
+
