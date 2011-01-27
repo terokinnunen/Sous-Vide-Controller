@@ -26,17 +26,18 @@ import sys
 import os
 from Phidgets.Devices.TemperatureSensor import TemperatureSensor
 from time import sleep, time
+import threading
 
 __author__ = 'Tero Kinnunen'
-__version__ = '0.1'
-__date__ = 'Jan 23 2011'
+__version__ = '0.2'
+__date__ = 'Jan 27 2011'
 
 class PhidgetTemperatureSensor:
-    MEAS_AVERAGE_COUNT = 5
-    MEAS_AVERAGE_DELAY = 0.5
     
     def __init__(self, sensor_index=0):
         self.sensor_index = sensor_index
+        self.lock = threading.RLock()
+        self.temp = 0
         self.temperatureSensor = TemperatureSensor()
         self.temperatureSensor.openPhidget()
         print("Waiting for attach....")
@@ -46,27 +47,19 @@ class PhidgetTemperatureSensor:
              self.temperatureSensor.getSerialNum(), 
              self.temperatureSensor.getDeviceType(), 
              self.sensor_index)
+        self.temperatureSensor.setTemperatureChangeTrigger(self.sensor_index, 0.05)
+        self.temperatureSensor.setOnTemperatureChangeHandler(self._temp_changed)
     
     def close(self):
         self.temperatureSensor.closePhidget()
         
+    def _temp_changed(self, e):
+        with self.lock:
+            self.temp = e.temperature
+            
     def get_temperature(self):
-        measurements = []
-        debug_str = []
-        for i in range(self.MEAS_AVERAGE_COUNT):
-            t = self.temperatureSensor.getTemperature(self.sensor_index)
-            measurements.append(t)
-            debug_str.append("%.2f" % t)
-            sleep(self.MEAS_AVERAGE_DELAY)
-        temp = self._average(measurements)
-        debug = " ".join(debug_str)
-        return (temp, debug)
-    
-    def _average(self, values):
-        return sum(values)/len(values)
-    
-    def _median(self, values):
-        return sorted(values)[len(values)/2]
+        with self.lock:
+            return self.temp
 
 class PlugController:
     def __init__(self, controller_id):
@@ -99,26 +92,19 @@ class SousVide:
     def start(self):
         start = int(time())
         log = open("SousVideLog.csv", "a")
-        print " s\t  t    T   on/off  (measurements)"
+        print " s\t  t    T   on/off"
         while True:
             round_time = int(time())
-            t, debuginfo = self.temperature_sensor.get_temperature()
+            t = self.temperature_sensor.get_temperature()
             on = self.controller_algorithm.get_setting(t)
             self.plug_controller.set_on(on)
             threshold = self.controller_algorithm.get_threshold()
-            print "%d\t%.2f %.2f %s (%s)" % (round_time-start, t, threshold, str(on), debuginfo)
-            log.write("%d\t%f\t%f\t%d\n" % (round_time, t, threshold, self._bool_int(on)))
+            print "%d\t%.2f %.2f %s" % (round_time-start, t, threshold, str(on))
+            log.write("%d\t%f\t%f\t%d\n" % (round_time, t, threshold, int(on)))
             sleep(self.update_interval + round_time - time())
             
     def set_update_interval(self, seconds):
         self.update_interval = seconds
-        
-    def _bool_int(self, bool):
-        if bool:
-            return 1
-        else:
-            return 0
-
 
 def usage():
     print """Usage: SousVide [options] temperature
